@@ -1,0 +1,201 @@
+-- Crear base de datos
+CREATE DATABASE TallerMecanico
+ON PRIMARY (
+    NAME = 'TallerMecanico_Data',
+    FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\TallerMecanico.mdf',
+    SIZE = 10MB,
+    MAXSIZE = 100MB,
+    FILEGROWTH = 5MB
+)
+LOG ON (
+    NAME = 'TallerMecanico_Log',
+    FILENAME = 'C:\Program Files\Microsoft SQL Server\MSSQL15.MSSQLSERVER\MSSQL\DATA\TallerMecanico_log.ldf',
+    SIZE = 5MB,
+    MAXSIZE = 25MB,
+    FILEGROWTH = 5MB
+);
+GO
+
+USE TallerMecanico;
+GO
+
+-- Tablas
+CREATE TABLE Cliente (
+    DNI CHAR(8) PRIMARY KEY,
+    Nombre VARCHAR(100),
+    Telefono CHAR(9) CHECK (LEN(Telefono) = 9),
+    Direccion VARCHAR(200)
+);
+
+CREATE TABLE Administrador (
+    ID_Admin INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100),
+    Telefono CHAR(9) CHECK (LEN(Telefono) = 9),
+    DNI CHAR(8)
+);
+
+CREATE TABLE Vehiculo (
+    ID_Vehiculo INT IDENTITY(1,1) PRIMARY KEY,
+    Placa VARCHAR(6),
+    Marca VARCHAR(50),
+    Modelo VARCHAR(50),
+    Anio INT CHECK (Anio >= 1900),
+    DNI_Cliente CHAR(8),
+    ID_Admin INT,
+    FOREIGN KEY (DNI_Cliente) REFERENCES Cliente(DNI),
+    FOREIGN KEY (ID_Admin) REFERENCES Administrador(ID_Admin)
+);
+
+CREATE TABLE Problema (
+    ID_Problema INT IDENTITY(1,1) PRIMARY KEY,
+    Descripcion VARCHAR(150),
+    FechaRegistro DATE,
+    ID_Vehiculo INT,
+    ID_Admin INT,
+    FOREIGN KEY (ID_Vehiculo) REFERENCES Vehiculo(ID_Vehiculo),
+    FOREIGN KEY (ID_Admin) REFERENCES Administrador(ID_Admin)
+);
+
+CREATE TABLE Mecanico (
+    ID_Mecanico INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100),
+    DNI CHAR(8),
+    Telefono CHAR(9) CHECK (LEN(Telefono) = 9)
+);
+
+CREATE TABLE Reparacion (
+    ID_Problema INT,
+    ID_Mecanico INT,
+    PRIMARY KEY (ID_Problema, ID_Mecanico),
+    FOREIGN KEY (ID_Problema) REFERENCES Problema(ID_Problema),
+    FOREIGN KEY (ID_Mecanico) REFERENCES Mecanico(ID_Mecanico)
+);
+
+CREATE TABLE Producto (
+    ID_Producto INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100),
+    Precio DECIMAL(10, 2) CHECK (Precio >= 0),
+    Tipo VARCHAR(20),
+    Stock INT CHECK (Stock >= 0),
+    Modelo VARCHAR(50),
+    Marca VARCHAR(50)
+);
+
+CREATE TABLE Servicio (
+    ID_Servicio INT IDENTITY(1,1) PRIMARY KEY,
+    ID_Producto INT,
+    Descripcion VARCHAR(150),
+    Costo DECIMAL(10,2) CHECK (Costo >= 0),
+    FOREIGN KEY (ID_Producto) REFERENCES Producto(ID_Producto)
+);
+
+CREATE TABLE Vendedor (
+    ID_Vendedor INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100),
+    Telefono CHAR(9) CHECK (LEN(Telefono) = 9),
+    DNI CHAR(8)
+);
+
+CREATE TABLE Repuesto (
+    ID_Repuesto INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre VARCHAR(100),
+    ID_Producto INT,
+    Garantia VARCHAR(50),
+    Compatibilidad VARCHAR(100),
+    FechaCompra DATE,
+    ID_Vendedor INT,
+    FOREIGN KEY (ID_Producto) REFERENCES Producto(ID_Producto),
+    FOREIGN KEY (ID_Vendedor) REFERENCES Vendedor(ID_Vendedor)
+);
+
+CREATE TABLE Proforma (
+    ID_Proforma INT IDENTITY(1,1) PRIMARY KEY,
+    Precio DECIMAL(10, 2) CHECK (Precio >= 0),
+    Contenido VARCHAR(150),
+    DetalleProductos VARCHAR(150),
+    FechaEmision DATE,
+    ID_Problema INT,
+    ID_Admin INT,
+    ID_Servicio INT,
+    FOREIGN KEY (ID_Problema) REFERENCES Problema(ID_Problema),
+    FOREIGN KEY (ID_Admin) REFERENCES Administrador(ID_Admin),
+    FOREIGN KEY (ID_Servicio) REFERENCES Servicio(ID_Servicio)
+);
+GO
+
+-- Insertar datos
+INSERT INTO Cliente(DNI, Nombre, Telefono, Direccion)
+VALUES 
+('43681354', 'Gianino', '908563185', 'Jr. Santa Rosa 446'),
+('12345678', 'Carlos', '908123456', 'Av. Brasil 123'),
+('87654321', 'María', '912345678', 'Calle Ficticia 789'),
+('55443322', 'Javier Núñez', '918234567', 'Av. La Marina 456'),
+('66778899', 'Claudia Ríos', '919876543', 'Jr. Amazonas 321');
+
+INSERT INTO Administrador (Nombre, Telefono, DNI)
+VALUES 
+('Lucía Ramírez', '923456789', '10101010'),
+('Fernando Díaz', '934567891', '20202020');
+
+INSERT INTO Vehiculo (Placa, Marca, Modelo, Anio, DNI_Cliente, ID_Admin)
+VALUES 
+('ABC123', 'Toyota', 'Corolla', 2015, '43681354', 1),
+('XYZ789', 'Hyundai', 'Elantra', 2018, '12345678', 2),
+('DEF456', 'Mazda', '3', 2017, '55443322', 1),
+('GHI321', 'Kia', 'Rio', 2019, '66778899', 2),
+('AMP911', 'Nissan', 'Fiera', 2016, '87654321', 1);
+
+INSERT INTO Problema (Descripcion, FechaRegistro, ID_Vehiculo, ID_Admin)
+VALUES 
+('Frenos no responden', '2025-05-10', 1, 1),
+('Ruidos en el motor', '2025-05-12', 2, 2),
+('Cambio de aceite pendiente', '2025-05-17', 3, 1),
+('Problemas en el sistema eléctrico', '2025-05-18', 4, 2),
+('Luz del check engine encendida', '2025-05-19', 1, 1);
+
+INSERT INTO Mecanico (Nombre, DNI, Telefono)
+VALUES 
+('Juan Pérez', '30303030', '917654321'),
+('Laura Gómez', '40404040', '926789034'),
+('Anderson Larios', '72589646', '908691262'),
+
+INSERT INTO Reparacion (ID_Problema, ID_Mecanico)
+VALUES 
+(1, 1),
+(1, 2),
+(2, 2);
+
+INSERT INTO Producto (Nombre, Precio, Tipo, Stock, Modelo, Marca)
+VALUES 
+INSERT INTO Producto (Nombre, Precio, Tipo, Stock, Modelo, Marca)
+VALUES 
+('Bujía NGK', 25.00, 'Repuesto', 200, 'BKR6E', 'NGK'),
+('Filtro de aire', 30.00, 'Repuesto', 150, 'FA123', 'Bosch'),
+('Batería 12V', 180.00, 'Repuesto', 40, 'BAT12V', 'ACDelco'),
+('Cambio de bujías', 60.00, 'Servicio', 0, NULL, NULL),
+('Reparación de motor', 500.00, 'Servicio', 0, NULL, NULL),
+('Alineación de ruedas', 90.00, 'Servicio', 0, NULL, NULL),
+('Revisión de batería', 40.00, 'Servicio', 0, NULL, NULL);
+
+INSERT INTO Servicio (ID_Producto, Descripcion, Costo)
+VALUES 
+(4, 'Reemplazo completo de bujías', 60.00),
+(5, 'Reparación y ajuste de motor', 500.00),
+(6, 'Alineación y balanceo de ruedas', 90.00),
+(7, 'Revisión del estado de batería', 40.00);
+
+INSERT INTO Vendedor (Nombre, Telefono, DNI)
+VALUES 
+('Carlos Medina', '927654321', '50505050'),
+('Ana Torres', '937845612', '60606060');
+
+INSERT INTO Repuesto (Nombre, ID_Producto, Garantia, Compatibilidad, FechaCompra, ID_Vendedor)
+VALUES 
+('Bujía NGK', 1, '6 meses', 'Toyota, Hyundai', '2025-05-01', 1),
+('Filtro Bosch', 2, '1 año', 'Honda, Hyundai', '2025-05-03', 2),
+('Batería ACDelco', 3, '2 años', 'Todos', '2025-05-05', 1);
+
+INSERT INTO Proforma (Precio, Contenido, DetalleProductos, FechaEmision, ID_Problema, ID_Admin, ID_Servicio)
+VALUES 
+(60.00, 'Cambio de bujías', 'Bujía NGK (4 unidades)', '2025-05-15', 1, 1, 1),
+(500.00, 'Reparación de motor', 'Reparación general con piezas internas', '2025-05-16', 2, 2, 2);
